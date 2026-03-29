@@ -5,58 +5,28 @@ import { Navbar } from "@/components/navbar";
 import { EmotionDetectionPanel } from "@/components/emotiart/emotion-detection-panel";
 import { VisualGuidePanel } from "@/components/emotiart/visual-guide-panel";
 import { ArtCanvas } from "@/components/emotiart/art-canvas";
-import { EmotionKey } from "@/lib/emotiart-types";
+import { EmotionKey, ArtOutput } from "@/lib/emotiart-types";
 import { AnimatedOrbs } from "@/components/ui/animated-orbs";
 
-const emotionKeywords: Record<EmotionKey, string[]> = {
-  happy: ["happy", "joy", "excited", "great", "wonderful", "amazing", "love", "glad", "delighted", "cheerful", "fantastic", "awesome", "thrilled", "pleased", "elated"],
-  calm: ["calm", "peaceful", "relaxed", "serene", "tranquil", "content", "gentle", "quiet", "still", "composed", "centered", "mindful", "balanced"],
-  sad: ["sad", "unhappy", "depressed", "down", "melancholy", "gloomy", "sorrowful", "heartbroken", "disappointed", "lonely", "grief", "crying", "tears"],
-  angry: ["angry", "mad", "furious", "rage", "irritated", "annoyed", "frustrated", "outraged", "livid", "hostile", "hate", "disgusted"],
-  anxious: ["anxious", "worried", "nervous", "stressed", "tense", "uneasy", "fearful", "panic", "dread", "apprehensive", "restless", "scared"],
-  excited: ["excited", "thrilled", "eager", "enthusiastic", "hyped", "pumped", "energized", "animated", "vibrant", "passionate", "exhilarated"],
-  overwhelmed: ["overwhelmed", "overloaded", "swamped", "drowning", "exhausted", "burnt", "chaos", "too much", "cant handle", "breaking down", "pressure"],
+// Map API emotion names to our EmotionKey type
+const emotionMapping: Record<string, EmotionKey> = {
+  calm: "calm",
+  joy: "happy",
+  happy: "happy",
+  sadness: "sad",
+  sad: "sad",
+  anger: "angry",
+  angry: "angry",
+  fear: "anxious",
+  anxious: "anxious",
+  love: "happy",
+  gratitude: "happy",
+  confusion: "anxious",
+  hope: "calm",
+  tension: "anxious",
+  excited: "excited",
+  overwhelmed: "overwhelmed",
 };
-
-function analyzeText(text: string): { emotion: EmotionKey; confidence: number } {
-  const lowerText = text.toLowerCase();
-  const scores: Record<EmotionKey, number> = {
-    happy: 0,
-    calm: 0,
-    sad: 0,
-    angry: 0,
-    anxious: 0,
-    excited: 0,
-    overwhelmed: 0,
-  };
-
-  let totalMatches = 0;
-
-  for (const [emotion, keywords] of Object.entries(emotionKeywords)) {
-    for (const keyword of keywords) {
-      const regex = new RegExp(`\\b${keyword}\\b`, "gi");
-      const matches = lowerText.match(regex);
-      if (matches) {
-        scores[emotion as EmotionKey] += matches.length;
-        totalMatches += matches.length;
-      }
-    }
-  }
-
-  let topEmotion: EmotionKey = "calm";
-  let topScore = 0;
-
-  for (const [emotion, score] of Object.entries(scores)) {
-    if (score > topScore) {
-      topScore = score;
-      topEmotion = emotion as EmotionKey;
-    }
-  }
-
-  const confidence = totalMatches > 0 ? Math.min((topScore / totalMatches) * 100, 100) : 0;
-
-  return { emotion: topEmotion, confidence: Math.round(confidence) };
-}
 
 export default function TextAnalysisPage() {
   const [text, setText] = useState("");
@@ -64,17 +34,79 @@ export default function TextAnalysisPage() {
   const [confidence, setConfidence] = useState(0);
   const [isGenerated, setIsGenerated] = useState(false);
   const [generationKey, setGenerationKey] = useState(0);
+  const [artOutput, setArtOutput] = useState<ArtOutput | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [detectedEmotions, setDetectedEmotions] = useState<Array<{ name: string; confidence: number }>>([]);
 
   const canvasRef = useRef<{ regenerate: () => void; download: () => void }>(null);
 
-  const handleAnalyze = useCallback(() => {
+  const handleAnalyze = useCallback(async () => {
     if (!text.trim()) return;
 
-    const result = analyzeText(text);
-    setActiveEmotion(result.emotion);
-    setConfidence(result.confidence);
-    setIsGenerated(true);
-    setGenerationKey((prev) => prev + 1);
+    setIsAnalyzing(true);
+    
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Analysis failed");
+      }
+
+      const result = await response.json();
+      
+      // Map the dominant emotion to our EmotionKey type
+      const mappedEmotion = emotionMapping[result.dominant_emotion] || "calm";
+      setActiveEmotion(mappedEmotion);
+      
+      // Set confidence from the dominant emotion
+      const dominantEmotionData = result.emotions?.find(
+        (e: { name: string }) => e.name === result.dominant_emotion
+      );
+      setConfidence(Math.round((dominantEmotionData?.confidence || 0.5) * 100));
+      
+      // Store detected emotions for display
+      setDetectedEmotions(result.emotions || []);
+      
+      // Set art output from API response
+      if (result.art_output?.art) {
+        setArtOutput({
+          primary: {
+            color: result.art_output.art.primary.color,
+            colorRgb: result.art_output.art.primary.colorRgb,
+            shape: result.art_output.art.primary.shape as ArtOutput["primary"]["shape"],
+          },
+          secondary: {
+            color: result.art_output.art.secondary.color,
+            colorRgb: result.art_output.art.secondary.colorRgb,
+            shape: result.art_output.art.secondary.shape as ArtOutput["secondary"]["shape"],
+          },
+          shapeCount: result.art_output.art.shapeCount,
+          sizeMin: result.art_output.art.sizeMin,
+          sizeMax: result.art_output.art.sizeMax,
+          opacityMin: result.art_output.art.opacityMin,
+          opacityMax: result.art_output.art.opacityMax,
+          speed: result.art_output.art.speed || 0.5,
+          animationStyle: result.art_output.art.animationStyle || "float",
+        });
+      }
+      
+      setIsGenerated(true);
+      setGenerationKey((prev) => prev + 1);
+    } catch (error) {
+      console.error("Analysis error:", error);
+      // Fallback to calm emotion on error
+      setActiveEmotion("calm");
+      setConfidence(50);
+      setArtOutput(null);
+      setIsGenerated(true);
+      setGenerationKey((prev) => prev + 1);
+    } finally {
+      setIsAnalyzing(false);
+    }
   }, [text]);
 
   return (
@@ -90,6 +122,7 @@ export default function TextAnalysisPage() {
             emotion={activeEmotion}
             isGenerated={isGenerated}
             generationKey={generationKey}
+            artOutput={artOutput}
           />
         </div>
 
