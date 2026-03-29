@@ -26,10 +26,9 @@ export default function ContactPage() {
 
     const subjectText = `[EmotiArt ${subjectLabels[formData.subject] || formData.subject}] Message from ${formData.name}`;
 
-    // Use Web3Forms - free email service (250 submissions/month)
-    // Get your free access key at https://web3forms.com with your Gmail
     const web3FormsData = {
-      access_key: "YOUR_WEB3FORMS_ACCESS_KEY", // Replace with your Web3Forms access key
+      access_key: "ae0d5150-4a25-4463-956e-512ccc5a7141",
+      to: "jaisamadhiya@gmail.com",
       subject: subjectText,
       from_name: "EmotiArt Contact Form",
       name: formData.name,
