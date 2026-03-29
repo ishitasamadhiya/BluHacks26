@@ -88,7 +88,7 @@ export default function ContactPage() {
           </p>
 
           {isSubmitted ? (
-            <div className="p-8 rounded-xl bg-white/[0.03] border border-white/[0.07] text-center">
+            <div className="p-8 rounded-xl bg-white/[0.03] border border-white/[0.07] text-center overflow-visible">
               <div className="w-16 h-16 rounded-full bg-[#06AED4]/20 flex items-center justify-center mx-auto mb-4">
                 <svg
                   className="w-8 h-8 text-[#06AED4]"
@@ -105,10 +105,12 @@ export default function ContactPage() {
                 </svg>
               </div>
               <h2 className="font-sans font-semibold text-xl text-white mb-2">
-                Message Sent
+                Message Sent!
               </h2>
-              <p className="font-sans text-white/60 mb-6">
-                Thank you for reaching out. We&apos;ll get back to you soon.
+              <p className="font-sans text-white/60 mb-6 leading-relaxed">
+                Thank you for reaching out.
+                <br />
+                We&apos;ll get back to you soon.
               </p>
               <button
                 onClick={() => {
