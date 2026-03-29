@@ -83,16 +83,18 @@ export default function ContactPage() {
 
       <main className="flex-1 overflow-y-auto px-6 py-16">
         <div className="max-w-xl mx-auto">
-          <h1 className="font-sans font-bold text-3xl md:text-4xl text-white mb-4 text-center">
-            Get in Touch
-          </h1>
-          <p className="font-sans text-white/60 text-center mb-12">
-            Have questions, feedback, or just want to say hello? We&apos;d love to
-            hear from you.
-          </p>
+          <div className="animate-fade-in">
+            <h1 className="font-sans font-bold text-3xl md:text-4xl text-white mb-4 text-center">
+              Get in Touch
+            </h1>
+            <p className="font-sans text-white/60 text-center mb-12">
+              Have questions, feedback, or just want to say hello? We&apos;d love to
+              hear from you.
+            </p>
+          </div>
 
           {isSubmitted ? (
-            <div className="p-8 rounded-xl bg-white/[0.03] border border-white/[0.07] text-center overflow-visible">
+            <div className="p-8 rounded-xl glass text-center overflow-visible animate-fade-in hover-lift">
               <div className="w-16 h-16 rounded-full bg-[#06AED4]/20 flex items-center justify-center mx-auto mb-4">
                 <svg
                   className="w-8 h-8 text-[#06AED4]"
@@ -127,7 +129,7 @@ export default function ContactPage() {
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in">
               <div>
                 <label
                   htmlFor="name"
@@ -142,7 +144,7 @@ export default function ContactPage() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full h-11 px-4 rounded-lg bg-white/[0.05] border border-white/[0.07] text-white font-sans text-sm placeholder:text-white/30 focus:outline-none focus:border-[#06AED4]/50 focus:ring-1 focus:ring-[#06AED4]/50 transition-colors"
+                  className="w-full h-11 px-4 rounded-lg glass text-white font-sans text-sm placeholder:text-white/30 focus:outline-none focus:border-[#06AED4]/50 focus:ring-1 focus:ring-[#06AED4]/50 transition-all duration-200"
                   placeholder="Your name"
                 />
               </div>
@@ -161,7 +163,7 @@ export default function ContactPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full h-11 px-4 rounded-lg bg-white/[0.05] border border-white/[0.07] text-white font-sans text-sm placeholder:text-white/30 focus:outline-none focus:border-[#06AED4]/50 focus:ring-1 focus:ring-[#06AED4]/50 transition-colors"
+                  className="w-full h-11 px-4 rounded-lg glass text-white font-sans text-sm placeholder:text-white/30 focus:outline-none focus:border-[#06AED4]/50 focus:ring-1 focus:ring-[#06AED4]/50 transition-all duration-200"
                   placeholder="you@example.com"
                 />
               </div>
@@ -179,7 +181,7 @@ export default function ContactPage() {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full h-11 px-4 rounded-lg bg-white/[0.05] border border-white/[0.07] text-white font-sans text-sm focus:outline-none focus:border-[#06AED4]/50 focus:ring-1 focus:ring-[#06AED4]/50 transition-colors appearance-none cursor-pointer"
+                  className="w-full h-11 px-4 rounded-lg glass text-white font-sans text-sm focus:outline-none focus:border-[#06AED4]/50 focus:ring-1 focus:ring-[#06AED4]/50 transition-all duration-200 appearance-none cursor-pointer"
                 >
                   <option value="" disabled className="bg-[#16161a]">
                     Select a subject
@@ -213,7 +215,7 @@ export default function ContactPage() {
                   onChange={handleChange}
                   required
                   rows={5}
-                  className="w-full px-4 py-3 rounded-lg bg-white/[0.05] border border-white/[0.07] text-white font-sans text-sm placeholder:text-white/30 focus:outline-none focus:border-[#06AED4]/50 focus:ring-1 focus:ring-[#06AED4]/50 transition-colors resize-none"
+                  className="w-full px-4 py-3 rounded-lg glass text-white font-sans text-sm placeholder:text-white/30 focus:outline-none focus:border-[#06AED4]/50 focus:ring-1 focus:ring-[#06AED4]/50 transition-all duration-200 resize-none"
                   placeholder="Tell us what's on your mind..."
                 />
               </div>
@@ -221,7 +223,7 @@ export default function ContactPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-12 bg-white text-black font-sans font-semibold text-sm rounded-lg hover:opacity-90 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-12 bg-white text-black font-sans font-semibold text-sm rounded-lg hover:opacity-90 hover-lift active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed glow-cyan"
               >
                 {isSubmitting ? "Sending..." : "Send Message"}
               </button>

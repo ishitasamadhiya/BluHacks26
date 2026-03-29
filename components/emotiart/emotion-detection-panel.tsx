@@ -15,7 +15,7 @@ export function EmotionDetectionPanel({
   const activeColor = activeEmotionData?.color ?? "#6b6b7a";
 
   return (
-    <div className="bg-[#16161a] border border-[rgba(255,255,255,0.07)] rounded-xl p-4 flex flex-col gap-4">
+    <div className="glass rounded-xl p-4 flex flex-col gap-4 hover-lift transition-all duration-200">
       <label className="font-mono text-[11px] uppercase tracking-[0.1em] text-[#6b6b7a]">
         Detected Emotion
       </label>

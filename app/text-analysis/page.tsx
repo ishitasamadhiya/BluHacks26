@@ -6,6 +6,7 @@ import { EmotionDetectionPanel } from "@/components/emotiart/emotion-detection-p
 import { VisualGuidePanel } from "@/components/emotiart/visual-guide-panel";
 import { ArtCanvas } from "@/components/emotiart/art-canvas";
 import { EmotionKey } from "@/lib/emotiart-types";
+import { AnimatedOrbs } from "@/components/ui/animated-orbs";
 
 const emotionKeywords: Record<EmotionKey, string[]> = {
   happy: ["happy", "joy", "excited", "great", "wonderful", "amazing", "love", "glad", "delighted", "cheerful", "fantastic", "awesome", "thrilled", "pleased", "elated"],
@@ -77,7 +78,8 @@ export default function TextAnalysisPage() {
   }, [text]);
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-[#0d0d0f]">
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-[#0d0d0f] relative">
+      <AnimatedOrbs />
       <Navbar />
 
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
@@ -92,9 +94,9 @@ export default function TextAnalysisPage() {
         </div>
 
         {/* Sidebar */}
-        <aside className="w-full lg:w-[320px] lg:order-1 flex-shrink-0 p-3 flex flex-col gap-3 overflow-y-auto">
+        <aside className="w-full lg:w-[320px] lg:order-1 flex-shrink-0 p-3 flex flex-col gap-3 overflow-y-auto animate-fade-in">
           {/* Text Input Panel */}
-          <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.07]">
+          <div className="p-4 rounded-xl glass hover-lift transition-all duration-200">
             <h2 className="font-sans font-semibold text-sm text-white mb-3">
               Text Input
             </h2>
@@ -102,7 +104,7 @@ export default function TextAnalysisPage() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Paste your messages, journal entry, or any text here to analyze its emotional tone..."
-              className="w-full h-32 px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.07] text-white font-sans text-sm placeholder:text-white/30 focus:outline-none focus:border-[#06AED4]/50 focus:ring-1 focus:ring-[#06AED4]/50 transition-colors resize-none"
+              className="w-full h-32 px-3 py-2 rounded-lg glass text-white font-sans text-sm placeholder:text-white/30 focus:outline-none focus:border-[#06AED4]/50 focus:ring-1 focus:ring-[#06AED4]/50 transition-all duration-200 resize-none"
             />
             <p className="font-mono text-xs text-white/40 mt-2">
               {text.length} characters
@@ -118,7 +120,7 @@ export default function TextAnalysisPage() {
           <button
             onClick={handleAnalyze}
             disabled={!text.trim()}
-            className="w-full h-11 bg-white text-black font-sans font-semibold text-sm rounded-lg hover:opacity-88 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-11 bg-white text-black font-sans font-semibold text-sm rounded-lg hover:opacity-90 hover-lift active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed glow-cyan"
           >
             Analyze Text
           </button>
