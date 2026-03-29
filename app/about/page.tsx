@@ -1,4 +1,8 @@
+"use client";
+
 import { Navbar } from "@/components/navbar";
+import { ShaderBackground } from "@/components/ui/shader-background";
+import { AnimatedOrbs } from "@/components/ui/animated-orbs";
 
 const textAnalysisFeatures = [
   {
@@ -74,15 +78,17 @@ const emotions = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#0d0d0f]">
+    <div className="min-h-screen flex flex-col bg-[#0d0d0f] relative overflow-hidden">
+      <ShaderBackground intensity={0.12} speed={0.0002} />
+      <AnimatedOrbs />
       <Navbar />
 
       <main className="flex-1 overflow-y-auto">
         {/* Hero Section */}
-        <section className="px-6 py-20 text-center max-w-4xl mx-auto">
+        <section className="px-6 py-20 text-center max-w-4xl mx-auto animate-fade-in">
           <h1 className="font-sans font-bold text-4xl md:text-5xl text-white mb-6 text-balance">
             Transform Your Emotions Into{" "}
-            <span className="text-[#06AED4]">Visual Art</span>
+            <span className="text-[#06AED4] glow-cyan">Visual Art</span>
           </h1>
           <p className="font-sans text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
             EmotiArt uses AI-powered facial expression and voice analysis to
@@ -99,11 +105,11 @@ export default function AboutPage() {
           <p className="font-sans text-white/60 text-center mb-12 max-w-2xl mx-auto">
             Analyze the emotional tone of messages, journal entries, or any written text.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-stagger">
             {textAnalysisFeatures.map((feature) => (
               <div
                 key={feature.step}
-                className="p-6 rounded-xl bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.12] transition-colors"
+                className="p-6 rounded-xl glass hover-lift hover:border-white/[0.15] transition-all duration-200"
               >
                 <div
                   className="font-mono text-sm font-medium mb-3"
@@ -130,11 +136,11 @@ export default function AboutPage() {
           <p className="font-sans text-white/60 text-center mb-12 max-w-2xl mx-auto">
             Use your camera and microphone for real-time emotion detection powered by AI.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-stagger">
             {liveAnalysisFeatures.map((feature) => (
               <div
                 key={feature.step}
-                className="p-6 rounded-xl bg-white/[0.03] border border-white/[0.07] hover:border-white/[0.12] transition-colors"
+                className="p-6 rounded-xl glass hover-lift hover:border-white/[0.15] transition-all duration-200"
               >
                 <div
                   className="font-mono text-sm font-medium mb-3"
@@ -158,11 +164,11 @@ export default function AboutPage() {
           <h2 className="font-sans font-semibold text-2xl text-white mb-12 text-center">
             Emotion Color Palette
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 animate-stagger">
             {emotions.map((emotion) => (
               <div
                 key={emotion.name}
-                className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.07] text-center"
+                className="p-4 rounded-xl glass hover-lift text-center transition-all duration-200"
               >
                 <div
                   className="w-10 h-10 rounded-full mx-auto mb-3"
@@ -190,7 +196,7 @@ export default function AboutPage() {
             </a>
             <a
               href="/"
-              className="inline-flex items-center justify-center h-12 px-8 bg-[#06AED4] text-black font-sans font-semibold text-sm rounded-lg hover:opacity-90 active:scale-[0.98] transition-all duration-150"
+              className="inline-flex items-center justify-center h-12 px-8 bg-[#06AED4] text-black font-sans font-semibold text-sm rounded-lg hover:opacity-90 active:scale-[0.98] transition-all duration-150 glow-cyan"
             >
               Try Live Analysis
             </a>

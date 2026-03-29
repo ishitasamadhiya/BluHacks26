@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Navbar } from "@/components/navbar";
+import { ShaderBackground } from "@/components/ui/shader-background";
+import { AnimatedOrbs } from "@/components/ui/animated-orbs";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -74,7 +76,9 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0d0d0f]">
+    <div className="min-h-screen flex flex-col bg-[#0d0d0f] relative overflow-hidden">
+      <ShaderBackground intensity={0.1} speed={0.0002} />
+      <AnimatedOrbs />
       <Navbar />
 
       <main className="flex-1 overflow-y-auto px-6 py-16">
