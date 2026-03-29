@@ -6,7 +6,7 @@ import { EmotionDetectionPanel } from "@/components/emotiart/emotion-detection-p
 import { VisualGuidePanel } from "@/components/emotiart/visual-guide-panel";
 import { ArtCanvas } from "@/components/emotiart/art-canvas";
 import { Navbar } from "@/components/navbar";
-import { EmotionKey, EmotiArtState } from "@/lib/emotiart-types";
+import { EmotionKey, EmotiArtState, ArtOutput, EmotiArtBridgeResult } from "@/lib/emotiart-types";
 
 export default function EmotiArtPage() {
   const [state, setState] = useState<EmotiArtState>({
@@ -16,7 +16,10 @@ export default function EmotiArtPage() {
     isListening: false,
     isGenerated: false,
     generationKey: 0,
+    artOutput: null,
   });
+
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const canvasRef = useRef<{ regenerate: () => void; download: () => void }>(null);
 
@@ -56,7 +59,24 @@ export default function EmotiArtPage() {
     []
   );
 
-  // Expose global API for Gemini Live integration
+  // Process result from the Python backend via EmotiArtBridge
+  const processBridgeResult = useCallback((result: EmotiArtBridgeResult) => {
+    setState((prev) => ({
+      ...prev,
+      activeEmotion: result.emotion as EmotionKey,
+      confidence: result.intensity,
+      artOutput: result.art,
+      isGenerated: true,
+      generationKey: prev.generationKey + 1,
+    }));
+  }, []);
+
+  // Set art output directly
+  const setArtOutput = useCallback((art: ArtOutput | null) => {
+    setState((prev) => ({ ...prev, artOutput: art }));
+  }, []);
+
+  // Expose global API for Gemini Live integration and Bridge
   useEffect(() => {
     if (typeof window !== "undefined") {
       (window as typeof window & { EmotiArt: typeof window.EmotiArt }).EmotiArt = {
@@ -65,9 +85,12 @@ export default function EmotiArtPage() {
         setListening,
         generate,
         processGeminiResult,
+        processBridgeResult,
+        setArtOutput,
+        getVideoElement: () => videoRef.current,
       };
     }
-  }, [setEmotion, setTranscript, setListening, generate, processGeminiResult]);
+  }, [setEmotion, setTranscript, setListening, generate, processGeminiResult, processBridgeResult, setArtOutput]);
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[#0d0d0f]">
@@ -82,6 +105,7 @@ export default function EmotiArtPage() {
           emotion={state.activeEmotion}
           isGenerated={state.isGenerated}
           generationKey={state.generationKey}
+          artOutput={state.artOutput}
         />
       </div>
 
@@ -122,6 +146,9 @@ declare global {
         confidence: number;
         transcript: string;
       }) => void;
+      processBridgeResult: (result: EmotiArtBridgeResult) => void;
+      setArtOutput: (art: ArtOutput | null) => void;
+      getVideoElement: () => HTMLVideoElement | null;
     };
   }
 }

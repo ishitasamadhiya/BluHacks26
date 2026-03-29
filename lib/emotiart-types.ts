@@ -32,4 +32,32 @@ export interface EmotiArtState {
   isListening: boolean;
   isGenerated: boolean;
   generationKey: number;
+  artOutput?: ArtOutput | null;
+}
+
+// Art output from the Python backend
+export interface ArtShapeOutput {
+  color: string;
+  colorRgb: [number, number, number];
+  shape: "dot" | "circle" | "wave" | "arc" | "triangle" | "starburst" | "square";
+}
+
+export interface ArtOutput {
+  primary: ArtShapeOutput;
+  secondary: ArtShapeOutput;
+  shapeCount: number;
+  sizeMin: number;
+  sizeMax: number;
+  opacityMin: number;
+  opacityMax: number;
+  speed: number;
+  animationStyle: "float" | "pulse" | "drift" | "jitter";
+}
+
+export interface EmotiArtBridgeResult {
+  emotion: string;
+  intensity: number;
+  conflict: boolean;
+  conflict_blend: number;
+  art: ArtOutput;
 }

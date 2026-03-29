@@ -8,12 +8,13 @@ import {
   useImperativeHandle,
   useState,
 } from "react";
-import { EMOTIONS, EmotionKey } from "@/lib/emotiart-types";
+import { EMOTIONS, EmotionKey, ArtOutput, ArtShapeOutput } from "@/lib/emotiart-types";
 
 interface ArtCanvasProps {
   emotion: EmotionKey;
   isGenerated: boolean;
   generationKey: number;
+  artOutput?: ArtOutput | null;
 }
 
 interface Shape {
@@ -33,6 +34,99 @@ function hexToRgba(hex: string, alpha: number): string {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function rgbaFromArray(rgb: [number, number, number], alpha: number): string {
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+}
+
+// Draw shape based on backend art output shape type
+function drawBridgeShape(
+  ctx: CanvasRenderingContext2D,
+  shapeType: ArtShapeOutput["shape"],
+  x: number,
+  y: number,
+  size: number,
+  color: [number, number, number],
+  opacity: number,
+  rotation: number = 0
+) {
+  const alpha = opacity;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+
+  switch (shapeType) {
+    case "circle":
+    case "dot": {
+      ctx.fillStyle = rgbaFromArray(color, alpha);
+      ctx.beginPath();
+      ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+    case "wave": {
+      ctx.strokeStyle = rgbaFromArray(color, alpha);
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      const amplitude = size * 0.3;
+      const frequency = 0.05;
+      const length = size * 2;
+      ctx.moveTo(-length / 2, 0);
+      for (let px = -length / 2; px <= length / 2; px += 2) {
+        const py = Math.sin(px * frequency) * amplitude;
+        ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      break;
+    }
+    case "arc": {
+      ctx.strokeStyle = rgbaFromArray(color, alpha);
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.arc(0, 0, size / 2, Math.PI, 2 * Math.PI);
+      ctx.stroke();
+      break;
+    }
+    case "triangle": {
+      ctx.fillStyle = rgbaFromArray(color, alpha);
+      ctx.beginPath();
+      const h = size;
+      const w = size * 0.8;
+      ctx.moveTo(0, -h / 2);
+      ctx.lineTo(w / 2, h / 2);
+      ctx.lineTo(-w / 2, h / 2);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    }
+    case "starburst": {
+      ctx.fillStyle = rgbaFromArray(color, alpha);
+      ctx.beginPath();
+      const outerR = size / 2;
+      const innerR = outerR * 0.4;
+      for (let i = 0; i < 12; i++) {
+        const r = i % 2 === 0 ? outerR : innerR;
+        const angle = (i * Math.PI) / 6 - Math.PI / 2;
+        const px = Math.cos(angle) * r;
+        const py = Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      break;
+    }
+    case "square": {
+      ctx.fillStyle = rgbaFromArray(color, alpha);
+      ctx.fillRect(-size / 2, -size / 2, size, size);
+      break;
+    }
+  }
+
+  ctx.restore();
 }
 
 function generateShapes(
@@ -208,7 +302,7 @@ function drawShape(
 export const ArtCanvas = forwardRef<
   { regenerate: () => void; download: () => void },
   ArtCanvasProps
->(function ArtCanvas({ emotion, isGenerated, generationKey }, ref) {
+>(function ArtCanvas({ emotion, isGenerated, generationKey, artOutput }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -263,12 +357,37 @@ export const ArtCanvas = forwardRef<
     []
   );
 
+  // Generate bridge shapes from artOutput
+  interface BridgeShape {
+    x: number;
+    y: number;
+    size: number;
+    opacity: number;
+    rotation: number;
+    isPrimary: boolean;
+  }
+
+  const generateBridgeShapes = useCallback((art: ArtOutput, width: number, height: number): BridgeShape[] => {
+    const bridgeShapes: BridgeShape[] = [];
+    const count = art.shapeCount;
+    
+    for (let i = 0; i < count; i++) {
+      bridgeShapes.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        size: Math.random() * (art.sizeMax - art.sizeMin) + art.sizeMin,
+        opacity: Math.random() * (art.opacityMax - art.opacityMin) + art.opacityMin,
+        rotation: (Math.random() - 0.5) * 0.8,
+        isPrimary: Math.random() > 0.3, // 70% primary, 30% secondary
+      });
+    }
+    return bridgeShapes;
+  }, []);
+
   // Generate and animate shapes
   const generateArt = useCallback(() => {
     if (dimensions.width === 0 || dimensions.height === 0) return;
 
-    const newShapes = generateShapes(emotion, dimensions.width, dimensions.height);
-    setShapes(newShapes);
     setTimestamp(
       new Date().toLocaleTimeString("en-US", {
         hour: "2-digit",
@@ -287,51 +406,107 @@ export const ArtCanvas = forwardRef<
     const startTime = performance.now();
     const duration = 600;
 
-    const animate = (currentTime: number) => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+    // Use artOutput from bridge if available, otherwise use local emotion-based generation
+    if (artOutput) {
+      const bridgeShapes = generateBridgeShapes(artOutput, dimensions.width, dimensions.height);
 
-      // Clear and draw grid
-      drawGrid(ctx, dimensions.width * dpr, dimensions.height * dpr);
+      const animateBridge = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
 
-      // Draw shapes with staggered fade-in
-      ctx.save();
-      ctx.scale(dpr, dpr);
+        drawGrid(ctx, dimensions.width * dpr, dimensions.height * dpr);
 
-      newShapes.forEach((shape, index) => {
-        const shapeDelay = (index / newShapes.length) * 0.5;
-        const shapeProgress = Math.max(
-          0,
-          Math.min(1, (progress - shapeDelay) / 0.5)
+        ctx.save();
+        ctx.scale(dpr, dpr);
+
+        bridgeShapes.forEach((shape, index) => {
+          const shapeDelay = (index / bridgeShapes.length) * 0.5;
+          const shapeProgress = Math.max(0, Math.min(1, (progress - shapeDelay) / 0.5));
+          
+          if (shapeProgress > 0) {
+            const shapeData = shape.isPrimary ? artOutput.primary : artOutput.secondary;
+            drawBridgeShape(
+              ctx,
+              shapeData.shape,
+              shape.x,
+              shape.y,
+              shape.size,
+              shapeData.colorRgb,
+              shape.opacity * shapeProgress,
+              shape.rotation
+            );
+          }
+        });
+
+        ctx.font = "11px var(--font-mono), monospace";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.22)";
+        ctx.fillText(
+          `${emotion} · ${new Date().toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })}`,
+          16,
+          dimensions.height - 16
         );
-        if (shapeProgress > 0) {
-          drawShape(ctx, emotion, shape, emotionData.color, shapeProgress);
+
+        ctx.restore();
+
+        if (progress < 1) {
+          animationRef.current = requestAnimationFrame(animateBridge);
         }
-      });
+      };
 
-      // Draw overlay text
-      ctx.font = "11px var(--font-dm-mono), monospace";
-      ctx.fillStyle = "rgba(255, 255, 255, 0.22)";
-      ctx.fillText(
-        `${emotion} · ${new Date().toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        })}`,
-        16,
-        dimensions.height - 16
-      );
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = requestAnimationFrame(animateBridge);
+    } else {
+      // Fallback to local emotion-based generation
+      const newShapes = generateShapes(emotion, dimensions.width, dimensions.height);
+      setShapes(newShapes);
 
-      ctx.restore();
+      const animate = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
 
-      if (progress < 1) {
-        animationRef.current = requestAnimationFrame(animate);
-      }
-    };
+        drawGrid(ctx, dimensions.width * dpr, dimensions.height * dpr);
 
-    cancelAnimationFrame(animationRef.current);
-    animationRef.current = requestAnimationFrame(animate);
-  }, [dimensions, emotion, emotionData.color, drawGrid]);
+        ctx.save();
+        ctx.scale(dpr, dpr);
+
+        newShapes.forEach((shape, index) => {
+          const shapeDelay = (index / newShapes.length) * 0.5;
+          const shapeProgress = Math.max(
+            0,
+            Math.min(1, (progress - shapeDelay) / 0.5)
+          );
+          if (shapeProgress > 0) {
+            drawShape(ctx, emotion, shape, emotionData.color, shapeProgress);
+          }
+        });
+
+        ctx.font = "11px var(--font-mono), monospace";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.22)";
+        ctx.fillText(
+          `${emotion} · ${new Date().toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })}`,
+          16,
+          dimensions.height - 16
+        );
+
+        ctx.restore();
+
+        if (progress < 1) {
+          animationRef.current = requestAnimationFrame(animate);
+        }
+      };
+
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = requestAnimationFrame(animate);
+    }
+  }, [dimensions, emotion, emotionData.color, drawGrid, artOutput, generateBridgeShapes]);
 
   // Initial grid draw
   useEffect(() => {
@@ -354,7 +529,7 @@ export const ArtCanvas = forwardRef<
       shapes.forEach((shape) => {
         drawShape(ctx, emotion, shape, emotionData.color, 1);
       });
-      ctx.font = "11px var(--font-dm-mono), monospace";
+      ctx.font = "11px var(--font-mono), monospace";
       ctx.fillStyle = "rgba(255, 255, 255, 0.22)";
       ctx.fillText(`${emotion} · ${timestamp}`, 16, dimensions.height - 16);
       ctx.restore();
